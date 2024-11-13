@@ -4,9 +4,15 @@
 # Saved files
 .saved/
 
+# Pre-commit
+.pre-commit-cache/
+
 # Python
 __pycache__/
 *.py[cod]
+.pytest_cache/
+.coverage
+coverage.xml
 *$py.class
 *.so
 .Python
