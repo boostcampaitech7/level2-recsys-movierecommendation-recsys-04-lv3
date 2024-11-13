@@ -22,7 +22,7 @@ repos:
     hooks:
     -   id: flake8
         args: ['--max-line-length=120']  # flake8의 줄 길이 제한을 black과 맞춤
-        ignore: ['E203', 'W503']  # black과 충돌할 수 있는 규칙 무시
+        ignore: ['E203', 'W503']  # black과 충돌할 수 있는 규칙 무시함
 
 # Add isort for import sorting
 -   repo: https://github.com/pre-commit/mirrors-isort
