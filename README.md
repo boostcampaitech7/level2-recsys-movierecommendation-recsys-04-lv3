@@ -1,3 +1,4 @@
+```
 .
 ├── .data                     # Stores data files
 ├── .github
@@ -20,3 +21,4 @@
 ├── run.sh                    # Shell script to run the project
 ├── requirements.txt          # Dependencies
 └── README.md                 # Project documentation
+```
