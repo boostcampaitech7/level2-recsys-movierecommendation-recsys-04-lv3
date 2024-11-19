@@ -71,3 +71,7 @@ Desktop.ini
 *.hdf5
 *.pkl
 *.bin
+
+# MLflow
+mlruns
+mlartifacts
