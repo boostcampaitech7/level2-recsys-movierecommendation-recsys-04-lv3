@@ -5,7 +5,29 @@ from pathlib import Path
 import argparse
 from tqdm import tqdm
 
-class UserItemMatrix:
+class UserItemFilteringMatrix:
+    """
+    A class used to create and manage a user-item interaction matrix.
+    
+    Attributes:
+        data_dir (Path): Directory path containing the data files.
+        user_item_matrix (csr_matrix): The user-item interaction matrix.
+        user2id (dict): Mapping from user IDs to matrix indices.
+        item2id (dict): Mapping from item IDs to matrix indices.
+        id2user (dict): Mapping from matrix indices to user IDs.
+        id2item (dict): Mapping from matrix indices to item IDs.
+        diff_max_days (int): Maximum number of days between the first and last interaction.
+        non_masking_day (int): Number of days to not mask the items.
+    
+    Methods:
+        save_matrix(filename='user_item_matrix.npy'):
+            Save the user-item interaction matrix to a file.
+        load_matrix(filename='user_item_matrix.npy'):
+            Load the user-item interaction matrix from a file.
+        get_matrix():
+            Return the user-item interaction matrix.
+    """
+    
     def __init__(self, data_dir='../../data/train', diff_max_days=5, non_masking_day=0):
         """
         Initialize UserItemMatrix class
@@ -24,14 +46,14 @@ class UserItemMatrix:
         self.diff_max_days = diff_max_days
         self.non_masking_day = non_masking_day
         
-    def load_data(self):
+    def _load_data(self):
         """Load and preprocess the training data and years data"""
         train_df = pd.read_csv(self.data_dir / 'train_ratings.csv')
         years_df = pd.read_csv(self.data_dir / 'years.tsv', sep='\t')
         
         return train_df, years_df
     
-    def process_user_time(self, train_df):
+    def _process_user_time(self, train_df):
         """
         Process user time information and filter users based on time difference
         
@@ -55,7 +77,7 @@ class UserItemMatrix:
         
         return user_time[user_time['diff'] <= self.diff_max_days]
     
-    def create_id_mappings(self, train_df):
+    def _create_id_mappings(self, train_df):
         """Create user and item ID mappings"""
         n_users = train_df['user'].nunique()
         n_items = train_df['item'].nunique()
@@ -70,9 +92,9 @@ class UserItemMatrix:
     
     def create_matrix(self):
         """Create user-item matrix"""
-        train_df, years_df = self.load_data()
-        user_time = self.process_user_time(train_df)
-        n_users, n_items = self.create_id_mappings(train_df)
+        train_df, years_df = self._load_data()
+        user_time = self._process_user_time(train_df)
+        n_users, n_items = self._create_id_mappings(train_df)
         
         # Initialize matrix
         user_item_matrix = np.zeros((n_users+1, n_items+1))
@@ -128,6 +150,6 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
-    uim = UserItemMatrix(data_dir=args.data_dir, diff_max_days=args.diff_max_days, non_masking_day=args.non_masking_day)
+    uim = UserItemFilteringMatrix(data_dir=args.data_dir, diff_max_days=args.diff_max_days, non_masking_day=args.non_masking_day)
     uim.create_matrix().save_matrix()
     print("Matrix saved")
