@@ -104,7 +104,7 @@ class MlflowManager:
         """
         if type == "torch":
             mlflow.pytorch.log_model(model, artifact_path)
-        elif type == "lgb":
+        elif type == "lgbm":
             mlflow.lightgbm.log_model(model, artifact_path)
         else:
             raise Exception(f"Check type: {type}")
