@@ -28,7 +28,7 @@ class UserItemFilteringMatrix:
             Return the user-item interaction matrix.
     """
     
-    def __init__(self, data_dir='../../data/train', diff_max_days=5, non_masking_day=0):
+    def __init__(self, data_dir='./data/train', diff_max_days=5, non_masking_day=0):
         """
         Initialize UserItemMatrix class
         
@@ -104,8 +104,8 @@ class UserItemFilteringMatrix:
             user = row[1]
             user = self.user2id[user]
             max_year = row[5]
-            items = years_df[years_df['year'] > max_year]['item']
-            items = items[items.isin(self.item2id.keys())].map(self.item2id).values
+            items = years_df[years_df['year'] > max_year]['item'].map(self.item2id).values
+            
             user_item_matrix[user, items] = 1
         
         self.user_item_matrix = csr_matrix(user_item_matrix)
@@ -144,7 +144,7 @@ class UserItemFilteringMatrix:
 # 파일 save
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data_dir", default="../../data/train", type=str)
+    parser.add_argument("--data_dir", default="./data/train", type=str)
     parser.add_argument("--diff_max_days", default=5, type=int)
     parser.add_argument("--non_masking_day", default=0, type=int)
     
