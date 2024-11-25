@@ -1,0 +1,21 @@
+data_path: '../../data/train/'
+user_id_mapping_path: '../../data/train/user_id_mapping.csv'
+model_save_path: 'saved_models/'
+log_dir: 'logs/'
+final_prediction_path: 'predictions/'
+lr: 1e-4  
+wd: 1e-5  
+batch_size: 256
+epochs: 100
+total_anneal_steps: 200000  
+anneal_cap: 0.2
+seed: 42
+log_interval: 50
+
+vae_architecture:
+  encoder_dims: [64]
+  latent_dim: 8
+  dropout_prob: 0.2
+
+n_users: null
+n_items: null

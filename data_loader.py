@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from scipy import sparse
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, random_split
 
 class MovieLensDataset(Dataset):
     def __init__(self, data_path, transform=None, save_mapping=True):
@@ -53,17 +53,33 @@ class MovieLensDataset(Dataset):
                               index=False)
 
 def get_data_loader(config):
+    # 전체 데이터셋 생성
     dataset = MovieLensDataset(config.data_path)
     
     # Set n_users and n_items in the config
     config.n_users = dataset.n_users
     config.n_items = dataset.n_items
     
-    data_loader = DataLoader(
-        dataset,
+    # 학습/검증 데이터 분할 (90% 학습, 10% 검증)
+    train_size = int(0.9 * len(dataset))
+    val_size = len(dataset) - train_size
+    train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+    
+    # DataLoader 생성
+    train_loader = DataLoader(
+        train_dataset,
         batch_size=config.batch_size,
         shuffle=True,
-        num_workers=4
+        num_workers=4,
+        pin_memory=True  # GPU 메모리 사용 최적화
     )
     
-    return data_loader, dataset.n_users, dataset.n_items
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=config.batch_size,
+        shuffle=False,
+        num_workers=4,
+        pin_memory=True
+    )
+    
+    return train_loader, val_loader, dataset.n_users, dataset.n_items

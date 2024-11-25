@@ -7,6 +7,29 @@ import pandas as pd
 import bottleneck as bn
 from torch.utils.tensorboard import SummaryWriter
 
+class EarlyStopping:
+    def __init__(self, patience=7, min_delta=0, verbose=False):
+        self.patience = patience
+        self.min_delta = min_delta
+        self.verbose = verbose
+        self.counter = 0
+        self.best_loss = None
+        self.early_stop = False
+        self.val_loss_min = np.Inf
+
+    def __call__(self, val_loss):
+        if self.best_loss is None:
+            self.best_loss = val_loss
+        elif val_loss > self.best_loss - self.min_delta:
+            self.counter += 1
+            if self.verbose:
+                print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
+            if self.counter >= self.patience:
+                self.early_stop = True
+        else:
+            self.best_loss = val_loss
+            self.counter = 0
+
 class Trainer:
     def __init__(self, model, optimizer, config, device):
         self.model = model
@@ -15,6 +38,7 @@ class Trainer:
         self.device = device
         self.writer = SummaryWriter(log_dir=config.log_dir)
         self.update_count = 0
+        self.early_stopping = EarlyStopping(patience=10, verbose=True)
         
         self._create_directories()
 
@@ -28,13 +52,15 @@ class Trainer:
             if not os.path.exists(directory):
                 os.makedirs(directory)
 
+    @torch.cuda.amp.autocast()
     def train_one_epoch(self, data_loader, epoch):
         self.model.train()
         train_loss = 0.0
         start_time = time.time()
+        scaler = torch.cuda.amp.GradScaler()
 
         for batch_idx, data in enumerate(data_loader):
-            data = data.to(self.device)
+            data = data.to(self.device, non_blocking=True)
             self.optimizer.zero_grad()
             
             if self.config.total_anneal_steps > 0:
@@ -43,27 +69,44 @@ class Trainer:
             else:
                 anneal = self.config.anneal_cap
             
-            recon_batch, mu, logvar = self.model(data)
-            loss = self.loss_function(recon_batch, data, mu, logvar, anneal)
+            with torch.cuda.amp.autocast():
+                recon_batch, mu, logvar = self.model(data)
+                loss = self.loss_function(recon_batch, data, mu, logvar, anneal)
             
-            loss.backward()
+            scaler.scale(loss).backward()
+            scaler.step(self.optimizer)
+            scaler.update()
+            
             train_loss += loss.item()
-            self.optimizer.step()
-            
             self.update_count += 1
             
             if batch_idx % self.config.log_interval == 0 and batch_idx > 0:
                 self._log_progress(epoch, batch_idx, len(data_loader), train_loss, start_time)
                 start_time = time.time()
                 train_loss = 0.0
+                
+            if batch_idx % 10 == 0:
+                torch.cuda.empty_cache()
 
+        return train_loss / len(data_loader)
+
+    def evaluate(self, data_loader):
+        self.model.eval()
+        total_loss = 0
+        with torch.no_grad():
+            for data in data_loader:
+                data = data.to(self.device, non_blocking=True)
+                recon_batch, mu, logvar = self.model(data)
+                loss = self.loss_function(recon_batch, data, mu, logvar)
+                total_loss += loss.item()
+        
+        return total_loss / len(data_loader)
+
+    @torch.cuda.amp.autocast()
     def generate_recommendations(self, dataset, n_items=10):
         """
         Generate recommendations for all users
-        
-        Args:
-            dataset: MovieLensDataset instance
-            n_items: Number of items to recommend per user
+        dataset: original MovieLensDataset instance (not the subset)
         """
         self.model.eval()
         recommendations = []
@@ -72,16 +115,19 @@ class Trainer:
         user_mapping_df = pd.read_csv(self.config.user_id_mapping_path)
         user_id_dict = dict(zip(user_mapping_df['user_idx'], user_mapping_df['user']))
         
-        # Process users in batches
-        batch_size = 100  # Adjust based on your memory constraints
+        n_users = len(user_mapping_df)  # 전체 사용자 수
+        batch_size = 100
+        
         with torch.no_grad():
-            for start_idx in range(0, dataset.n_users, batch_size):
-                end_idx = min(start_idx + batch_size, dataset.n_users)
+            for start_idx in range(0, n_users, batch_size):
+                end_idx = min(start_idx + batch_size, n_users)
                 
-                # Get user data for the batch
-                user_data = torch.stack([dataset[i] for i in range(start_idx, end_idx)]).to(self.device)
+                # Get the full dataset's sparse matrix for these users
+                user_data = torch.stack([
+                    torch.FloatTensor(dataset.sparse_matrix[i].toarray().flatten()) 
+                    for i in range(start_idx, end_idx)
+                ]).to(self.device, non_blocking=True)
                 
-                # Get recommendations
                 recon_batch, _, _ = self.model(user_data)
                 recon_batch = recon_batch.cpu().numpy()
                 
@@ -105,6 +151,9 @@ class Trainer:
                             'item': int(item),
                             'score': float(-score)
                         })
+                
+                if start_idx % 1000 == 0:
+                    torch.cuda.empty_cache()
         
         return pd.DataFrame(recommendations)
 
@@ -125,11 +174,12 @@ class Trainer:
         KLD = -0.5 * torch.mean(torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1))
         return BCE + anneal * KLD
 
-    def save_checkpoint(self, epoch, best=False):
+    def save_checkpoint(self, epoch, loss, best=False):
         checkpoint = {
             'epoch': epoch,
             'model_state_dict': self.model.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
+            'loss': loss,
             'update_count': self.update_count
         }
         if best:
@@ -137,3 +187,5 @@ class Trainer:
         else:
             path = os.path.join(self.config.model_save_path, f'model_epoch_{epoch}.pt')
         torch.save(checkpoint, path)
+        
+    
