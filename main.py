@@ -3,6 +3,7 @@ import torch
 import torch.optim as optim
 import pandas as pd
 import logging
+import json
 from config import Config
 from data_loader import get_data_loader
 from model import MultiVAE
@@ -11,7 +12,7 @@ from trainer import Trainer
 def main():
     start_time = time.time()
     
-    log_file = str(start_time)+'.log'
+    log_file = 'log/' + str(start_time)+'.log'
 
     # 로그 설정
     logging.basicConfig(
@@ -25,6 +26,9 @@ def main():
     
     logging.info('---------- 1. Initialize configuration')
     config = Config()
+
+    logging.info('Configuration Parameters :')
+    logging.info(json.dumps(vars(config), indent=4))
 
     logging.info('---------- 2. Set device')
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -83,7 +87,7 @@ def main():
             early_stop = True
             break
 
-    logging.info('---------- 7. Generate final recommendations ----------')
+    logging.info('---------- 7. Generate final recommendations')
     checkpoint = torch.load(f'{config.model_save_path}/best_model.pt')
     model.load_state_dict(checkpoint['model_state_dict'])
     
@@ -95,7 +99,7 @@ def main():
 
     end_time = time.time() 
     total_time = end_time - start_time
-    logging.info('---------- Done! ----------')
+    logging.info('---------- Done!')
     logging.info(f'Total time taken: {total_time:.2f} seconds')
     
     if early_stop:

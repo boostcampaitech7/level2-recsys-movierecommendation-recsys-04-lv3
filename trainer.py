@@ -88,7 +88,7 @@ class Trainer:
 
     def calculate_metrics(self, predict, target, k=10):
         """
-        Calculate Recall@K and NDCG@K using GPU operations
+        Calculate Recall@K and NDCG@K using GPU operations with optimized performance.
         
         Args:
             predict: prediction tensor on GPU (B x N)
@@ -97,52 +97,39 @@ class Trainer:
         Returns:
             recall@k, ndcg@k
         """
-        # Get the original predictions before masking
-        predict_orig = F.softmax(predict.clone(), dim=1)
+        # Softmax를 예측값에 적용
+        predict_orig = F.softmax(predict, dim=1)
         
-        # Create a mask for items that are not in the target
-        mask = ~target.bool()
+        # Top-k 아이템 인덱스와 해당 점수 가져오기
+        _, topk_indices = torch.topk(predict_orig, k, dim=1)
         
-        # Apply the mask (set scores of items in target to very low values)
-        predict = predict_orig.clone()
-        predict[~mask] = -1e10
+        # 타겟을 float로 변환
+        target_items = target.bool().float()  # 여기서 bool -> float 변환
         
-        # Get top-k items
-        _, topk_indices = torch.topk(predict, k, dim=1)
+        # Top-k의 relevance 계산
+        topk_relevance = torch.gather(target_items, 1, topk_indices)
         
-        # Get the predicted relevance scores for top-k items
-        topk_relevance = torch.gather(target, 1, topk_indices)
+        # Recall 계산
+        recall = topk_relevance.sum(dim=1).float() / torch.clamp(target_items.sum(dim=1), min=1)
+        recall_mean = recall.mean().item()
         
-        # Calculate Recall@K
-        target_sum = target.sum(1)
-        recall = torch.zeros_like(target_sum, dtype=torch.float)
-        mask = target_sum > 0
-        if mask.sum() > 0:
-            recall[mask] = topk_relevance[mask].sum(1).float() / target_sum[mask]
-        recall = recall.mean().item()
+        # NDCG 계산
+        discount = 1. / torch.log2(torch.arange(2, k + 2, device=predict.device).float())
+        dcg = (topk_relevance * discount).sum(dim=1)
         
-        # Calculate NDCG@K
-        # Create discount weights
-        discount = 1. / torch.log2(torch.arange(2, k + 2, dtype=torch.float, device=predict.device))
+        # IDCG 계산 (정렬된 타겟 기준)
+        ideal_relevance, _ = torch.sort(target_items, descending=True, dim=1)
+        ideal_relevance = ideal_relevance[:, :k]
+        idcg = (ideal_relevance * discount[:ideal_relevance.size(1)]).sum(dim=1)
         
-        # Calculate DCG
-        dcg = (topk_relevance * discount).sum(1)
+        # IDCG가 0인 경우 처리
+        ndcg = dcg / torch.clamp(idcg, min=1e-10)
+        ndcg_mean = ndcg.mean().item()
         
-        # Calculate IDCG
-        idcg = torch.zeros_like(dcg)
-        for i in range(target.size(0)):
-            if target_sum[i] > 0:
-                # Sort target in descending order and take top k
-                target_sorted, _ = torch.sort(target[i], descending=True)
-                idcg[i] = (target_sorted[:k] * discount[:min(k, int(target_sum[i]))]).sum()
-        
-        # Calculate NDCG
-        ndcg = torch.zeros_like(dcg)
-        valid_mask = idcg > 0
-        ndcg[valid_mask] = dcg[valid_mask] / idcg[valid_mask]
-        ndcg = ndcg.mean().item()
+        return recall_mean, ndcg_mean
 
-        return recall, ndcg
+
+
 
     @torch.cuda.amp.autocast()
     def train_one_epoch(self, data_loader, epoch):

@@ -6,16 +6,16 @@ final_prediction_path: 'predictions/'
 lr: 1e-4  
 wd: 1e-5  
 batch_size: 256
-epochs: 100
-total_anneal_steps: 200000  
-anneal_cap: 0.2
+epochs: 200
+total_anneal_steps: 100000  # annealing 스케줄이 적용될 총 스텝 수
+anneal_cap: 0.2 # VAE에서 KL divergence에 대한 annealing의 최대값
 seed: 42
-log_interval: 50
+log_interval: 100
 
 vae_architecture:
-  encoder_dims: [64]
-  latent_dim: 8
-  dropout_prob: 0.2
+  encoder_dims: [600]
+  latent_dim: 16
+  dropout_prob: 0.4
 
 n_users: null
 n_items: null
