@@ -3,6 +3,7 @@ import os
 
 import pandas as pd
 import numpy as np
+import pytz
 import torch
 from torch.utils.data import DataLoader
 
@@ -120,7 +121,9 @@ def main():
     print('----------------submission file-------------------')   
     pred = full_sort_predict(model, valid_dataloader)
     submission = generate_submission_file(valid_dataset, pred)
-    submission.to_csv(os.path.join(args.output_dir, args.model +'_submission_'+ pd.Timestamp.now().strftime("%Y-%m-%d %H:%M") +'.csv'), index=False)
+
+    timestamp = pd.Timestamp.now(tz=pytz.timezone('Asia/Seoul')).strftime("%Y-%m-%d %H%M")
+    submission.to_csv(os.path.join(args.output_dir, f"{args.model}_submission_{timestamp}.csv"), index=False)
 
 if __name__ == "__main__":
     main()
