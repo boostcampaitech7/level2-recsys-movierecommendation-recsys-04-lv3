@@ -28,27 +28,18 @@ def check_path(path):
         print(f"{path} created")
 
 
-def generate_submission_file(data_file, preds):
+def convert_sp_mat_to_sp_tensor(X):
+    # matrix -> tensor
+    coo = X.tocoo().astype(np.float32)
+    i = torch.LongTensor(np.mat([coo.row, coo.col]))
+    v = torch.FloatTensor(coo.data)
+    return torch.sparse.FloatTensor(i, v, coo.shape).to("cuda")
 
-    rating_df = pd.read_csv(data_file)
-    users = rating_df["user"].unique()
-
-    result = []
-
-    for index, items in enumerate(preds):
-        for item in items:
-            result.append((users[index], item))
-
-    pd.DataFrame(result, columns=["user", "item"]).to_csv(
-        "output/submission.csv", index=False
-    )
 
 def generate_submission_file(dataset, preds):
     submission = []
-    users = [i for i in range(0, dataset.n_users)]
-    for user in users:
-        rec_item_list = preds[user]
-        for item in rec_item_list:
+    for user,items in enumerate(preds):
+        for item in items:
             submission.append(
                 {   
                     'user' : dataset.user_decoder[user],
@@ -58,6 +49,7 @@ def generate_submission_file(dataset, preds):
 
     submission = pd.DataFrame(submission)
     return submission
+
 
 
 def get_ndcg(pred_list, true_list):
