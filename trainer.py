@@ -114,7 +114,7 @@ def full_sort_predict(model, data_loader):
 
         scores = pred * (1 - batch)
         scores = scores.argsort(dim=1)
-        pred = scores[:, :10] 
+        pred = scores[:, -10:] 
 
         preds[users] = pred.cpu().numpy()
     return preds
