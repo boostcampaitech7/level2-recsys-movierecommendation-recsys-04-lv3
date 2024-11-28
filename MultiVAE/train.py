@@ -3,9 +3,11 @@ import logging
 import torch
 import torch.nn.functional as F
 import pandas as pd
-from utils import recall_at_k, get_timestamp_filename
+
+from config import Config
 from early_stopping import EarlyStopping
-from config import Config 
+from utils import recall_at_k, get_timestamp_filename
+
 
 def calculate_loss(x_recon: torch.Tensor, mu: torch.Tensor, logvar: torch.Tensor, 
                    train_mask: torch.Tensor, update: int, total_anneal_steps: int, 

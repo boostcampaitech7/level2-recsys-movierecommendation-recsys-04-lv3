@@ -1,14 +1,15 @@
-import torch
-from torch.utils.data import DataLoader
 import os
 import time
 
+import torch
+from torch.utils.data import DataLoader
+
 from config import Config
-from utils import setup_logging, load_rating_csv_to_interaction_matrix, stratified_split, recall_at_k, get_timestamp_filename
-from early_stopping import EarlyStopping
-from dataset import MultiVAEDataset
 from model import MultiVAE
+from dataset import MultiVAEDataset
+from early_stopping import EarlyStopping
 from train import train_multiVAE, generate_recommendations
+from utils import setup_logging, load_rating_csv_to_interaction_matrix, stratified_split, recall_at_k, get_timestamp_filename
 
 def main():
     total_start_time = time.time()
