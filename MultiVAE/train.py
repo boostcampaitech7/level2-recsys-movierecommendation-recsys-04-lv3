@@ -1,26 +1,60 @@
-# train.py
 import os
+import logging
 import torch
 import torch.nn.functional as F
 import pandas as pd
 from utils import recall_at_k, get_timestamp_filename
+from early_stopping import EarlyStopping
+from config import Config 
 
-def calculate_loss(x_recon, mu, logvar, train_mask, update, total_anneal_steps, anneal_cap):
-    # Annealing 계산
+def calculate_loss(x_recon: torch.Tensor, mu: torch.Tensor, logvar: torch.Tensor, 
+                   train_mask: torch.Tensor, update: int, total_anneal_steps: int, 
+                   anneal_cap: float) -> torch.Tensor:
+    """
+    VAE 손실을 계산합니다. 
+    복원 손실과 KL 발산 손실을 포함하며, annealing이 적용됩니다.
+
+    Args:
+        x_recon (torch.Tensor): 복원된 행렬로, 크기는 (배치 크기, 아이템 수)입니다.
+        mu (torch.Tensor): VAE 잠재 공간에서의 평균값, 크기는 (배치 크기, 잠재 차원)입니다.
+        logvar (torch.Tensor): VAE 잠재 공간에서의 로그 분산, 크기는 (배치 크기, 잠재 차원)입니다.
+        train_mask (torch.Tensor): 입력에서 관측된 항목을 나타내는 마스크로, 크기는 (배치 크기, 아이템 수)입니다.
+        update (int): 훈련 단계 수로, annealing 계산에 사용됩니다.
+        total_anneal_steps (int): annealing을 적용할 총 단계 수입니다.
+        anneal_cap (float): annealing의 최대 값입니다.
+
+    Returns:
+        torch.Tensor: 배치에 대한 총 손실(복원 손실 + KL 발산 손실)을 반환합니다.
+    """
     if total_anneal_steps > 0:
         anneal = min(anneal_cap, 1.0 * update / total_anneal_steps)
     else:
         anneal = anneal_cap
 
-    # KL Divergence Loss (Annealing 적용)
     kl_loss = -0.5 * torch.mean(torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1)) * anneal
-    
-    # Reconstruction Loss (Cross Entropy)
     recon_loss = -(F.log_softmax(x_recon, 1) * train_mask).sum(1).mean()
     
     return recon_loss + kl_loss
 
-def train_multiVAE(model, train_loader, val_matrix, optimizer, config, device, logger, early_stopping):
+def train_multiVAE(model: torch.nn.Module, train_loader: torch.utils.data.DataLoader, val_matrix: torch.Tensor, 
+                   optimizer: torch.optim.Optimizer, config: Config, device: torch.device, logger: logging.Logger, 
+                   early_stopping: EarlyStopping) -> float:
+    """
+    MultiVAE 모델을 훈련시키고 검증 데이터에서 최상의 Recall@k를 얻습니다.
+
+    Args:
+        model (torch.nn.Module): 훈련할 VAE 모델입니다.
+        train_loader (torch.utils.data.DataLoader): 훈련 데이터 로더입니다.
+        val_matrix (torch.Tensor): 검증 데이터 행렬입니다.
+        optimizer (torch.optim.Optimizer): 모델의 옵티마이저입니다.
+        config (Config): 설정 파일에서 로드한 구성입니다.
+        device (torch.device): 훈련에 사용할 장치(CPU 또는 GPU)입니다.
+        logger (logging.Logger): 로깅을 위한 로거입니다.
+        early_stopping (EarlyStopping): 조기 종료를 위한 객체입니다.
+
+    Returns:
+        float: 최상의 Recall@k 값입니다.
+    """
     val_matrix_tensor = val_matrix.to(device)
     val_mask_tensor = (val_matrix > 0).float().to(device)
     
@@ -62,7 +96,6 @@ def train_multiVAE(model, train_loader, val_matrix, optimizer, config, device, l
                     f"Validation Loss: {val_loss.item():.4f}, "
                     f"Validation Recall@{config.recall_k}: {val_recall:.4f}")
         
-        # Best 모델 저장
         if val_recall > best_recall:
             best_recall = val_recall
             torch.save({
@@ -71,46 +104,51 @@ def train_multiVAE(model, train_loader, val_matrix, optimizer, config, device, l
                 'best_recall': best_recall
             }, os.path.join(config.model_save_dir, 'best_model.pth'))
         
-        # Early Stopping 체크
         if early_stopping(val_recall):
             logger.info(f"Early stopping triggered at epoch {epoch+1}")
             break
     
     return best_recall
 
-def generate_recommendations(model, interaction_matrix, user_id_map, item_id_map, config, device):
-    # 출력 디렉토리 확인
+def generate_recommendations(model: torch.nn.Module, interaction_matrix: torch.Tensor, 
+                             user_id_map: dict, item_id_map: dict, config: Config, 
+                             device: torch.device) -> pd.DataFrame:
+    """
+    훈련된 모델을 사용하여 사용자에게 추천을 생성합니다.
+
+    Args:
+        model (torch.nn.Module): 훈련된 VAE 모델입니다.
+        interaction_matrix (torch.Tensor): 사용자-아이템 상호작용 행렬입니다.
+        user_id_map (dict): 사용자 ID를 인덱스로 매핑한 딕셔너리입니다.
+        item_id_map (dict): 아이템 ID를 인덱스로 매핑한 딕셔너리입니다.
+        config (Config): 설정 파일에서 로드한 구성입니다.
+        device (torch.device): 추천을 생성할 때 사용할 장치(CPU 또는 GPU)입니다.
+
+    Returns:
+        pd.DataFrame: 추천된 사용자-아이템 쌍의 DataFrame을 반환합니다.
+    """
     os.makedirs(config.output_dir, exist_ok=True)
     
     model.eval()
     with torch.no_grad():
-        # 이미 GPU에 있는 텐서 사용
         predictions, _, _ = model(interaction_matrix)
         
-        # 원래 아이템 ID로 매핑
         reverse_item_map = {idx: item for item, idx in item_id_map.items()}
         
-        # 추천 결과 저장할 리스트
         recommendations = []
         for user_idx in range(interaction_matrix.shape[0]):
-            # 사용자의 기존 상호작용 아이템 찾기
             interacted_items = torch.nonzero(interaction_matrix[user_idx]).squeeze()
             
-            # 원본 user ID 찾기
             user = list(user_id_map.keys())[list(user_id_map.values()).index(user_idx)]
             
-            # 모델 예측 결과 가져오기
             user_predictions = predictions[user_idx]
             
-            # 기존에 상호작용하지 않은 아이템만 선택
             non_interacted_mask = torch.ones_like(user_predictions, dtype=torch.bool)
             non_interacted_mask[interacted_items] = False
             
-            # 필터링된 예측 결과에서 top-k 선택
             filtered_predictions = user_predictions.masked_fill(~non_interacted_mask, float('-inf'))
             top_k_items = filtered_predictions.topk(config.top_k_recommendations).indices
             
-            # 각 추천 아이템에 대해 개별 행 생성
             for item_idx in top_k_items:
                 rec_item = reverse_item_map[item_idx.item()]
                 recommendations.append({
@@ -118,7 +156,6 @@ def generate_recommendations(model, interaction_matrix, user_id_map, item_id_map
                     'item': rec_item
                 })
         
-        # CSV로 저장
         rec_df = pd.DataFrame(recommendations)
         recommendations_filename = get_timestamp_filename(prefix='user_recommendations', extension='.csv')
         rec_df.to_csv(os.path.join(config.output_dir, recommendations_filename), index=False)
