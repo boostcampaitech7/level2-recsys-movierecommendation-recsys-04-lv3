@@ -4,12 +4,12 @@ from torch.utils.data import DataLoader
 import os
 import time
 
-from config import Config
-from utils import setup_logging, load_rating_csv_to_interaction_matrix, stratified_split, recall_at_k, get_timestamp_filename
-from early_stopping import EarlyStopping
-from dataset import MultiVAEDataset
-from model import MultiVAE
-from train import train_multiVAE, generate_recommendations
+from MultiVAE.config import Config
+from MultiVAE.utils import setup_logging, load_rating_csv_to_interaction_matrix, stratified_split, recall_at_k, get_timestamp_filename
+from MultiVAE.early_stopping import EarlyStopping
+from MultiVAE.dataset import MultiVAEDataset
+from MultiVAE.model import MultiVAE
+from MultiVAE.train import train_multiVAE, generate_recommendations
 
 def main():
     # 전체 시작 시간 기록
