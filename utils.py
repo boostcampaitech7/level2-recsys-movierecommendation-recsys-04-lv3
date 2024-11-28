@@ -1,9 +1,9 @@
-# utils.py
 import os
 import logging
 import torch
 import numpy as np
 import pandas as pd
+from datetime import datetime
 from scipy.sparse import csr_matrix
 
 def setup_logging(log_dir, log_filename='training_log.txt'):
@@ -78,3 +78,11 @@ def recall_at_k(predictions, test_matrix, k=10):
         recalls.append(recall)
     
     return torch.mean(torch.tensor(recalls)).item() if recalls else 0
+
+def get_timestamp_filename(prefix='', extension='.txt'):
+    """
+    현재 날짜와 시간을 포함하는 파일 이름 생성
+    예: prefix_20231127_153045.txt
+    """
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return f"{prefix}_{timestamp}{extension}"

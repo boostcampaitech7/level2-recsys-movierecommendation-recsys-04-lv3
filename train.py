@@ -3,7 +3,7 @@ import os
 import torch
 import torch.nn.functional as F
 import pandas as pd
-from utils import recall_at_k
+from utils import recall_at_k, get_timestamp_filename
 
 def calculate_loss(x_recon, mu, logvar, train_mask, update, total_anneal_steps, anneal_cap):
     # Annealing 계산
@@ -120,6 +120,7 @@ def generate_recommendations(model, interaction_matrix, user_id_map, item_id_map
         
         # CSV로 저장
         rec_df = pd.DataFrame(recommendations)
-        rec_df.to_csv(os.path.join(config.output_dir, 'user_recommendations.csv'), index=False)
+        recommendations_filename = get_timestamp_filename(prefix='user_recommendations', extension='.csv')
+        rec_df.to_csv(os.path.join(config.output_dir, recommendations_filename), index=False)
         
         return rec_df

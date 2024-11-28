@@ -5,7 +5,7 @@ import os
 import time
 
 from config import Config
-from utils import setup_logging, load_rating_csv_to_interaction_matrix, stratified_split, recall_at_k
+from utils import setup_logging, load_rating_csv_to_interaction_matrix, stratified_split, recall_at_k, get_timestamp_filename
 from early_stopping import EarlyStopping
 from dataset import MultiVAEDataset
 from model import MultiVAE
@@ -16,10 +16,19 @@ def main():
     total_start_time = time.time()
 
     # 설정 로드
-    config = Config('config.yaml')
+    config = Config('config.yaml')   
     
     # 로깅 설정
-    logger = setup_logging(config.log_dir)
+    log_filename = get_timestamp_filename(prefix='training_log', extension='.txt')
+    logger = setup_logging(config.log_dir, log_filename)
+    
+    logger.info("===== Config Parameters =====")
+    if hasattr(config, '_config') and isinstance(config._config, dict):
+        config_table = "\n".join([f"{key:30}: {value}" for key, value in config._config.items()])
+    else:
+        config_table = "\n".join([f"{key:30}: {value}" for key, value in vars(config).items()])
+    logger.info(config_table)
+    logger.info("=============================\n")
     
     # GPU 설정
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
