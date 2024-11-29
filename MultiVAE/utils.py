@@ -119,9 +119,8 @@ def recall_at_k(predictions: torch.Tensor, test_matrix: torch.Tensor, k: int = 1
         
         top_k_items = predictions[user].topk(k).indices
         
-        # GPU에서 교집합 찾기
         hit_count = len(torch.tensor(list(set(top_k_items.cpu().numpy()) & set(test_items.cpu().numpy()))))
-        recall = hit_count / len(test_items)
+        recall = hit_count / min(len(test_items), k)
         recalls.append(recall)
     
     return torch.mean(torch.tensor(recalls)).item() if recalls else 0
