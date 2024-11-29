@@ -2,7 +2,7 @@ import os
 import torch
 import numpy as np
 from tqdm import tqdm
-from src.utils.utils import get_hit, get_ndcg, get_recall, convert_sp_mat_to_sp_tensor
+from utils import get_hit, get_ndcg, get_recall, convert_sp_mat_to_sp_tensor
 
 
 class EASETrainer:
@@ -34,7 +34,7 @@ class EASETrainer:
                 up = rec[-10:].cpu().numpy().tolist()[::-1]
                 NDCG += get_ndcg(pred_list = up, true_list = uv)
                 HIT += get_hit(pred_list = up, true_list = uv)
-                RECALL += get_recall(pred_list = up, true_list = uv)
+                RECALL += get_recall(pred_list = up, true_list = uv, k = 10)
 
         NDCG /= len(data_loader.dataset)
         HIT /= len(data_loader.dataset)

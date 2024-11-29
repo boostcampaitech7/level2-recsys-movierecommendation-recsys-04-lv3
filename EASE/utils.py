@@ -68,7 +68,7 @@ def get_hit(pred_list, true_list):
         hit = 1
     return hit
 
-def get_recall(pred_list, true_list):
+def get_recall(pred_list, true_list, k):
     recall_list = set(true_list) & set(pred_list)
-    recall = len(recall_list) / len(true_list)
+    recall = len(recall_list) / min(k,len(true_list))
     return recall

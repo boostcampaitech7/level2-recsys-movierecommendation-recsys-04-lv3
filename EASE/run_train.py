@@ -7,9 +7,9 @@ import pytz
 import torch
 from torch.utils.data import DataLoader
 
-from src.data.dataset import MovieLensDataset
-from src.models.EASE import EASE, MultiEASE
-from src.utils.utils import check_path, set_seed, generate_submission_file
+from dataset import MovieLensDataset
+from EASE import EASE, MultiEASE
+from utils import check_path, set_seed, generate_submission_file
 from trainer import EASETrainer, MultiEASETrainer, full_sort_predict
 from logging import getLogger
 
