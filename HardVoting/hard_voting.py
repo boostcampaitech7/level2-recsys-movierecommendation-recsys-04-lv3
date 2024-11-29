@@ -1,6 +1,23 @@
+import os
 import pandas as pd
 import math
+import yaml
 from collections import defaultdict
+
+def load_model_files(config_path='config.yaml'):
+    """
+    config.yaml 파일에서 모델 파일 목록을 읽어오는 함수.
+
+    Args:
+        config_path (str, optional): 모델 파일 목록이 저장된 YAML 파일 경로. 기본값은 'config.yaml'.
+
+    Returns:
+        list: YAML 파일에서 읽어온 모델 파일 경로 목록. 'model_files' 키가 존재하지 않으면 빈 리스트를 반환.
+    """
+    with open(config_path, 'r') as file:
+        config = yaml.safe_load(file)
+    return config.get('model_files', [])
+
 
 def simple_hard_voting_recommendation(model_files: list[str], top_n: int = 10) -> pd.DataFrame:
     """
@@ -97,16 +114,8 @@ def main():
     """
     추천 시스템을 실행하는 메인 함수. 사용자가 선택한 보팅 방식을 사용하여 추천 결과를 생성하고 저장합니다.
     """
-    model_files = [
-        'submission_admmslim_5_100.csv',
-        'submission_cdae_100.csv',
-        'submission_gru_100.csv',
-        'submission_RecVAE_100.csv',
-        'submission1_multiVAE100.csv',
-        'submission_ease_100.csv'
-    ]
+    model_files = load_model_files()  # config.yaml 파일에서 모델 파일 목록을 읽어옵니다.
     
-    # 사용자가 선택한 보팅 방식에 따라 추천 생성
     voting_method = input("Choose voting method (simple/weighted): ").strip().lower()
     
     if voting_method == "simple":
@@ -121,8 +130,7 @@ def main():
         print("Invalid choice.")
         return
     
-    # 추천 결과 출력
-    print(recommendations)
+    print(recommendations.head(20))
 
 if __name__ == "__main__":
     main()
