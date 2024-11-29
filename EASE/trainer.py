@@ -17,7 +17,7 @@ class EASETrainer:
             self.model.fit(mat)
         return loss_val
 
-    def evaluate(self, data_loader, user_valid):
+    def evaluate(self, data_loader, user_valid, k):
         NDCG, HIT, RECALL = 0.0, 0.0, 0.0
 
         mat = next(iter(data_loader))[0]
@@ -34,7 +34,7 @@ class EASETrainer:
                 up = rec[-10:].cpu().numpy().tolist()[::-1]
                 NDCG += get_ndcg(pred_list = up, true_list = uv)
                 HIT += get_hit(pred_list = up, true_list = uv)
-                RECALL += get_recall(pred_list = up, true_list = uv, k = 10)
+                RECALL += get_recall(pred_list = up, true_list = uv, k = k)
 
         NDCG /= len(data_loader.dataset)
         HIT /= len(data_loader.dataset)
@@ -74,7 +74,7 @@ class MultiEASETrainer:
         loss_val /= len(data_loader)
         return loss_val
 
-    def evaluate(self, data_loader, user_valid):
+    def evaluate(self, data_loader, user_valid, k):
         self.model.eval()
         NDCG, HIT, RECALL = 0.0, 0.0, 0.0
 
@@ -88,10 +88,10 @@ class MultiEASETrainer:
 
                 for user, rec in zip(users, rec_list):
                     uv = user_valid[user.item()]
-                    up = rec[-10:].cpu().numpy().tolist()[::-1]
+                    up = rec[-k:].cpu().numpy().tolist()[::-1]
                     NDCG += get_ndcg(pred_list=up, true_list=uv)
                     HIT += get_hit(pred_list=up, true_list=uv)
-                    RECALL += get_recall(pred_list=up, true_list=uv)
+                    RECALL += get_recall(pred_list=up, true_list=uv, k=k)
 
         NDCG /= len(data_loader.dataset)
         HIT /= len(data_loader.dataset)
@@ -104,9 +104,9 @@ class MultiEASETrainer:
         torch.save(self.model.state_dict(), os.path.join(path, filename))
 
 
-def full_sort_predict(model, data_loader):
+def full_sort_predict(model, data_loader, k):
     num_users = len(data_loader.dataset)
-    preds = np.zeros((num_users, 10), dtype=int) 
+    preds = np.zeros((num_users, k), dtype=int) 
 
     for batch, users in data_loader:
         batch = batch.to('cuda')
@@ -114,7 +114,7 @@ def full_sort_predict(model, data_loader):
 
         scores = pred * (1 - batch)
         scores = scores.argsort(dim=1)
-        pred = scores[:, -10:] 
+        pred = scores[:, -k:] 
 
         preds[users] = pred.cpu().numpy()
     return preds
