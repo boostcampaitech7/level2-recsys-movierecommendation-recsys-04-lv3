@@ -2,7 +2,6 @@ import argparse
 import os
 
 import pandas as pd
-import numpy as np
 import pytz
 import torch
 from torch.utils.data import DataLoader
@@ -94,7 +93,6 @@ def main():
     for epoch in range(1, args.epochs + 1):
         train_loss = trainer.train(train_dataloader)
         ndcg, hit, recall = trainer.evaluate(train_dataloader, user_valid, args.topk)
-
         print(f'Epoch: {epoch:3d}| Train loss: {train_loss:.5f}| NDCG@10: {ndcg:.5f}| HIT@10: {hit:.5f}| RECALL@10: {recall:.5f}')
 
         if best_recall < recall:
@@ -106,10 +104,9 @@ def main():
             if early_stop == args.early_stopping:
                 print('early stop!')
                 break
-    
 
     print('----------------submission file-------------------')   
-    pred = full_sort_predict(model, valid_dataloader, args.topk)
+    pred = full_sort_predict(model, valid_dataloader, args.topk, args.device)
     submission = generate_submission_file(valid_dataset, pred)
 
     timestamp = pd.Timestamp.now(tz=pytz.timezone('Asia/Seoul')).strftime("%Y-%m-%d %H%M")
