@@ -12,6 +12,8 @@ if __name__ == '__main__':
      # argument parser
     args =  argparse.ArgumentParser()
     args.add_argument("--config", default="config.yaml")
+    args.add_argument("--model_path", default="LRML_model.pth")
+    args.add_argument("--output_path", default="recommendations.csv")
     parsed_args = args.parse_args()
     
     # config file load
@@ -42,7 +44,7 @@ if __name__ == '__main__':
                 margin=config['margin'],
                 reg_weight=config['reg_weight']
                 )
-    model.load_state_dict(torch.load('LRML_11271021.pth'))
+    model.load_state_dict(torch.load(parsed_args.model_path))
     model = model.to('cuda')
 
     # 추천 생성
@@ -87,5 +89,5 @@ if __name__ == '__main__':
     results = pd.DataFrame(results, columns=['user', 'item'])
     results['user'] = results['user'].map(dataset.idx_user_map)
     results['item'] = results['item'].map(dataset.idx_item_map)
-    results.to_csv('recommendations_10.csv', index=False)
+    results.to_csv(parsed_args.output_path, index=False)
     print("submission saved")

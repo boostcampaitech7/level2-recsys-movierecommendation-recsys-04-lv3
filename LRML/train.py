@@ -107,7 +107,7 @@ def train_model(model: LRML, train_loader, test_dataset, num_epochs, device, lea
         # Save best model
         if recall > best_recall:
             best_recall = recall
-            torch.save(model.state_dict(), 'best_LRML_model.pth')
+            torch.save(model.state_dict(), 'LRML_model.pth')
              
         avg_loss = total_loss / len(train_loader)
         print(f'Epoch {epoch + 1}, Recall@10: {recall:.4f}, Average Loss: {avg_loss:.8f}')
