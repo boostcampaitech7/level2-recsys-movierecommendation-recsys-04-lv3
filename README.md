@@ -11,7 +11,8 @@
     - user-item interaction data와 item 정보에 대한 데이터 존재
 2. **문제 정의**
     - time-ordered sequence에서 **일부 item이 누락된 상황**을 가정하여 **일반적인 sequential recommendation보다 복잡한 환경**
-    ![사진 출처: AI Stages](image-1.png)
+    ![image](https://github.com/user-attachments/assets/88928ee6-8687-4de0-ae77-e2cd540ec7ee)
+
     
 3. **side-information 활용**
     - item과 관련된 다양한 부가 정보를 함께 사용하는 방향으로 설계 가능
@@ -25,17 +26,19 @@
 5. **평가 지표**
     - **normalized recall@10**
 
-$$
-\text{Recall@K} = \frac{1}{|U|} \sum_{u \in U} \frac{\left|\left\{i \in I_u \mid rank_u(i) \leq K\right\}\right|}{\min \left(K, \left|I_u\right|\right)}
-$$
-
+<img src="https://github.com/user-attachments/assets/b314b40d-ad5d-4db0-b6ae-b00c996ba9a6" width="800" height="150"/>
 
 ## 💡Team
-
 | 강현구 | 서동준 | 이도걸 | 이수미 | 최윤혜 | 양시영 |
 | --- | --- | --- | --- | --- | --- |
-| <img src="" width="150" height="150"/> | <img src="" width="150" height="150"/> | <img src="" width="150" height="150"/> | <img src="" width="150" height="150"/> | <img src="" width="150" height="150"/> | <img src="" width="150" height="150"/> |
-| Sequential-based models, Ensemble | EDA, LRML, K-fold Ensemble | ADMMSLIM, Parameter Tuning, General model | EDA, VAE기반 모델, MultiVAE 구현, Hard Voting | EDA, context-aware model, EASE/Multi-EASE 구현 | EDA, MLflow, CDAE, Soft Voting |
+| <img src="https://github.com/user-attachments/assets/e00fe2c2-20d6-497e-8d15-32368381f544" width="150" height="150"/> | <img src="https://github.com/user-attachments/assets/674a4608-a446-429f-957d-1bebeb48834f" width="150" height="150"/> | <img src="https://github.com/user-attachments/assets/1bdbd568-716a-40b7-937e-cbc5b1e063b8" width="150" height="150"/> | <img src="https://github.com/user-attachments/assets/c8fc634a-e41e-4b03-8779-a18235caa894" width="150" height="150"/> | <img src="https://github.com/user-attachments/assets/7a0a32bc-d22c-47a1-a6c7-2ea35aa7b912" width="150" height="150"/> | <img src="https://github.com/user-attachments/assets/1e9190cf-d2ae-4f3c-8327-70175656ab28" width="150" height="150"/> |
+
+- 강현구: Sequential-based models, Ensemble
+- 서동준: EDA, LRML, K-fold Ensemble
+- 이도걸: ADMMSLIM, Parameter Tuning, General model
+- 이수미: EDA, VAE기반 모델, MultiVAE 구현, Hard Voting
+- 최윤혜: EDA, context-aware model, EASE/Multi-EASE 구현
+- 양시영: EDA, MLflow, CDAE, Soft Voting
 
 ## 📑 구현된 모델 목록
 
