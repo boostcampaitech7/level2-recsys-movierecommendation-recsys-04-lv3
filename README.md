@@ -33,12 +33,14 @@
 | --- | --- | --- | --- | --- | --- |
 | <img src="https://github.com/user-attachments/assets/e00fe2c2-20d6-497e-8d15-32368381f544" width="150" height="150"/> | <img src="https://github.com/user-attachments/assets/674a4608-a446-429f-957d-1bebeb48834f" width="150" height="150"/> | <img src="https://github.com/user-attachments/assets/1bdbd568-716a-40b7-937e-cbc5b1e063b8" width="150" height="150"/> | <img src="https://github.com/user-attachments/assets/c8fc634a-e41e-4b03-8779-a18235caa894" width="150" height="150"/> | <img src="https://github.com/user-attachments/assets/7a0a32bc-d22c-47a1-a6c7-2ea35aa7b912" width="150" height="150"/> | <img src="https://github.com/user-attachments/assets/1e9190cf-d2ae-4f3c-8327-70175656ab28" width="150" height="150"/> |
 
-- 강현구: Sequential-based models, Ensemble
-- 서동준: EDA, LRML, K-fold Ensemble
-- 이도걸: ADMMSLIM, Parameter Tuning, General model
-- 이수미: EDA, VAE기반 모델, MultiVAE 구현, Hard Voting
-- 최윤혜: EDA, context-aware model, EASE/Multi-EASE 구현
-- 양시영: EDA, MLflow, CDAE, Soft Voting
+| 이름 | 역할 |
+| --- | --- |
+| 강현구 | Sequential-based models, Ensemble |
+| 서동준 | EDA, LRML, K-fold Ensemble |
+| 이도걸 | ADMMSLIM, Parameter Tuning, General model |
+| 이수미 | EDA, VAE기반 모델, MultiVAE 구현, Hard Voting |
+| 최윤혜 | EDA, context-aware model, EASE/Multi-EASE 구현 |
+| 양시영 | EDA, MLflow, CDAE, Soft Voting |
 
 ## 📑 구현된 모델 목록
 
@@ -103,4 +105,4 @@
 
 - 서버 스펙 : AI Stage GPU (Tesla V100)
 - 협업 툴 : Github / Zoom / Slack / Notion / Google Drive / MLflow
-- 기술 스택 : Python / Scikit-Learn / Torch / Recbole
+- 기술 스택 : Python / Scikit-Learn / PyTorch / RecBole
