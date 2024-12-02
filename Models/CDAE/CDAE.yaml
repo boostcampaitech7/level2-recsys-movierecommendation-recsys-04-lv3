@@ -1,0 +1,12 @@
+data_path: /data/ephemeral/home/level2-recsys-movierecommendation-recsys-04-lv3/.data/train/train_ratings.csv
+saved_path: /data/ephemeral/home/level2-recsys-movierecommendation-recsys-04-lv3/.saved/CDAE.pt
+submission_path: /data/ephemeral/home/level2-recsys-movierecommendation-recsys-04-lv3/.saved/submission_CDAE.csv
+params:
+  seed: 42
+  learning_rate: 0.001
+  batch_size: 16
+  num_epochs: 100
+  num_hidden_units: 50
+  corruption_ratio: 0.5
+  valid_samples: 10
+  num_workers: 4
