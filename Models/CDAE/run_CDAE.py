@@ -4,11 +4,11 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from src.data.CDAE_dataset import MakeMatrixDataSet, MovieDataSet
-from src.models.CDAE import CDAE
-from src.train import CDAE_train
-from src.utils.mlflow_setup import MlflowManager
-from src.utils.utils import load_config
+import CDAE_train
+from CDAE_dataset import MakeMatrixDataSet, MovieDataSet
+from CDAE import CDAE
+from mlflow_setup import MlflowManager
+from utils import load_config
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print("device: ", device)
