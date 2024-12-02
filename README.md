@@ -26,8 +26,9 @@
     - **normalized recall@10**
 
 $$
-\text { Recall@K }=\frac{1}{|U|} \sum_{u \in U} \frac{\left|\left\{i \in I_u \mid r a n k_u(i) \leq K\right\}\right|}{\min \left(K,\left|I_u\right|\right)}
+\text{Recall@K} = \frac{1}{|U|} \sum_{u \in U} \frac{\left|\left\{i \in I_u \mid rank_u(i) \leq K\right\}\right|}{\min \left(K, \left|I_u\right|\right)}
 $$
+
 
 ## 💡Team
 
