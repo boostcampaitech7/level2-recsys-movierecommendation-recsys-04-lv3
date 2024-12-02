@@ -1,0 +1,12 @@
+data_path: 'data/train_ratings.csv'
+seed: 42
+batch_size: 400000
+embedding_dim: 100
+memory_size: 100
+margin: 0.2
+reg_weight: 1
+epoch: 300
+learning_rate: 0.001
+test_num: 1
+cache_size: 400000
+device: 'cuda'
