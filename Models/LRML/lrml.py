@@ -1,5 +1,5 @@
-import torch.nn as nn
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 
 class LRML(nn.Module):
@@ -96,7 +96,6 @@ class LRML(nn.Module):
             l2_loss += torch.norm(param, p=2)
         
         return loss + l2_loss * self.reg_weight
-        # return -torch.sum(pos_scores)
             
     def _clip_by_norm(self, tensor, max_norm):
         norm = torch.norm(tensor, p=2, dim=-1, keepdim=True)  # L2 노름 계산

@@ -1,12 +1,15 @@
-from torch.utils.data import DataLoader
-from dataset import PairwiseDataset
-from utils import split_data_sklearn, set_seed
-from .train import train_model
-from lrml import LRML
-import pandas as pd
+import argparse
 import logging
 import yaml
-import argparse
+
+import pandas as pd
+from dataset import PairwiseDataset
+from torch.utils.data import DataLoader
+
+from LRML.lrml import LRML
+from LRML.train import train_model
+from LRML.utils import split_data_sklearn, set_seed
+     
      
 if __name__ == '__main__':
     logging.basicConfig(
@@ -44,7 +47,6 @@ if __name__ == '__main__':
     )
     test_dataset = PairwiseDataset(
         test_data, 
-        # neg=False,  # 테스트셋은 negative sampling 불필요
         user_map=user_map, 
         item_map=item_map,
         idx_user_map=idx_user_map,

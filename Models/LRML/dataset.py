@@ -1,8 +1,8 @@
-from torch.utils.data import Dataset
 import numpy as np
-from tqdm import tqdm
-from scipy.sparse import csr_matrix
 from collections import defaultdict
+from scipy.sparse import csr_matrix
+from torch.utils.data import Dataset
+from tqdm import tqdm
 
 class PairwiseDataset(Dataset):
     """
@@ -72,8 +72,7 @@ class PairwiseDataset(Dataset):
 
         # 캐시 초기화
         if not test:
-            # self.neg_cache = self._prepare_neg_cache()
-            self.neg_cache = self._prepare_neg_cache_2()
+            self.neg_cache = self._prepare_neg_cache_per_batch()
             self.cache_pointer = 0
     
     def _prepare_neg_cache(self): # version 1 item을 cache에 저장해서 속도가 빠르긴 하지만, negative sample이 고정임.
@@ -109,7 +108,7 @@ class PairwiseDataset(Dataset):
 
         return cache
     
-    def _prepare_neg_cache_2(self):
+    def _prepare_neg_cache_per_batch(self):
         cache = np.zeros((self.cache_size, 1), dtype=np.int64)
         self.user_set_cache = dict()
         for user in tqdm(range(self.num_users)):
@@ -152,8 +151,7 @@ class PairwiseDataset(Dataset):
     
     def __getitem__(self, idx):
         # 캐시에서 샘플 가져오기
-        # neg_user, neg_item = self.neg_cache[self.cache_pointer] # version 1
-        neg_user = self.neg_cache[self.cache_pointer][0] # version 2 -> 학습마다 negative item 뽑음
+        neg_user = self.neg_cache[self.cache_pointer][0]
         neg_item = np.random.choice(self.user_set_cache[neg_user])
         self.cache_pointer = (self.cache_pointer + 1) % self.cache_size
         
