@@ -4,6 +4,7 @@ from scipy.sparse import csr_matrix
 from pathlib import Path
 import argparse
 from tqdm import tqdm
+from typing import Dict
 
 class UserItemFilteringMatrix:
     """
@@ -37,14 +38,14 @@ class UserItemFilteringMatrix:
             diff_max_days (int): Maximum number of days between the first and last interaction
             non_masking_day (int): Number of days to not mask the items
         """
-        self.data_dir = Path(data_dir)
-        self.user_item_matrix = None
-        self.user2id = None
-        self.item2id = None
-        self.id2user = None
-        self.id2item = None
-        self.diff_max_days = diff_max_days
-        self.non_masking_day = non_masking_day
+        self.data_dir: Path = Path(data_dir)
+        self.user_item_matrix: csr_matrix = None
+        self.user2id: Dict[str, int] = None
+        self.item2id: Dict[str, int] = None
+        self.id2user: Dict[int, str] = None
+        self.id2item: Dict[int, str]= None
+        self.diff_max_days: int = diff_max_days
+        self.non_masking_day: int = non_masking_day
         
     def _load_data(self):
         """Load and preprocess the training data and years data"""
@@ -66,7 +67,7 @@ class UserItemFilteringMatrix:
         train_df = train_df.copy()
         train_df["time"] = pd.to_datetime(train_df["time"], unit='s')
         
-        user_time = train_df.groupby('user')['time'].agg(['min', 'max']).reset_index()
+        user_time = train_df.groupby('user', as_index=False)['time'].agg(['min', 'max'])
         user_time['diff'] = user_time['max'] - user_time['min']
         user_time['diff'] = user_time['diff'].dt.days
 
@@ -121,8 +122,7 @@ class UserItemFilteringMatrix:
         if self.user_item_matrix is None:
             raise ValueError("Matrix has not been created yet. Call create_matrix() first.")
             
-        save_path = self.data_dir / filename
-        np.save(save_path, self.user_item_matrix)
+        np.save(self.data_dir / filename, self.user_item_matrix)
         
     def load_matrix(self, filename='user_item_matrix.npy'):
         """
@@ -131,8 +131,7 @@ class UserItemFilteringMatrix:
         Args:
             filename (str): Name of the file to load the matrix from
         """
-        load_path = self.data_dir / filename
-        self.user_item_matrix = np.load(load_path, allow_pickle=True)[()]
+        self.user_item_matrix = np.load(self.data_dir / filename, allow_pickle=True)[()]
         return self
     
     def get_matrix(self):
